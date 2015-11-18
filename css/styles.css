@@ -1,0 +1,37 @@
+#content {
+
+}
+
+.article {
+
+}
+
+.active {
+	width: 500px !important;
+	position: relative;
+}
+
+.inactive {
+	width: 150px;
+	height: 150px;
+}
+
+.article > span {
+    display: inline-block;
+    padding: 10px;
+    width: 220px;
+}
+
+.article > span:hover {
+	border: thin solid gainsboro;
+	background-color: snow;
+	cursor: pointer;
+}
+
+#error {
+	color: red;
+}
+
+img {
+	width: 75%;
+}

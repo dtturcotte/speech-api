@@ -1,0 +1,47 @@
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-alpha1/jquery.min.js"></script>
+		<link rel="stylesheet" type="text/css" href="css/styles.css">
+		<script type="text/javascript" src="js/manager.js"></script>
+		<script type="text/javascript" src="js/lexicon.js"></script>
+		<script type="text/javascript" src="js/speech_obj.js"></script>
+		<script type="text/javascript" src="js/content.js"></script>
+
+		<script type="text/javascript">
+			(function () {
+				window.Utilities = window.Utilities || {};
+			})();
+		</script>
+	</head>
+	<body>	
+		
+		<div id="toggle_speech"></div>
+
+		<div id="native_speech"></div>		
+
+
+		<label for="amount">Adjust Speech Speed</label>
+		<select id="select_language" onchange="Utilities.STT.controls()">
+			<option selected="selected" value="1">Normal</option>
+			<option value=".7">Slow</option>
+			<option value=".5">Slowest</option>
+		</select>
+
+		<div class="command">
+			<p><b>Command:</b> <span id="textBox"><span> </p>
+			<p>Requested Action: <span id="action"><span> </p>
+			<p>Requested Content: <span id="content"><span> </p>
+
+			<i><p id="error"></p></i>
+		</div>
+
+		<section id="content">
+			<h2>Content</h2>
+
+			<div class="article"></div>
+		</section>		
+
+
+	</body>
+</html>
