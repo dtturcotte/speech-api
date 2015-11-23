@@ -198,7 +198,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			});
 			obj.attr('class', 'active');
 		}
-
 	};
 
 	Array.prototype.intersect = function(arr) {
