@@ -101,33 +101,31 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			*/
 			var content_components = this.getContentComponents(splitCommand);
 
-			console.log('sadsd', content_components);
+			var content = null;
+			if (content_components.tag.length > 0) {
+				content = this.getContentByTags(content_components.tag);
+			} else if (content_components.id.length > 0) {
+				content = this.getContentById(content_components.id);
+			} else {
+				console.log('Incorrect Command');
+				return;
+			}
 
+			this.updateGUI(command, actions, content);
 
-			// if (this.requested_content_ids.length > 0) {
-
-			// 	this.requested_content = this.getContent(this.requested_content_ids[0]);
-
-			// 	this.updateGUI(command, this.actions, this.requested_content);
-
-			// 	console.log('REQ CONTENT', this.requested_content);
-
-			// 	this.parseCommand(this.actions[0], this.requested_content);
-			// }
-
-
+			this.parseCommand(actions, content);
 		},
 
 		updateGUI : function (command, actions, content) {
-			$('#action').html(actions);
+			$('#action').html(actions.verbs);
 			$('#content').html(content.title);
 		},
 
-		parseCommand : function (command, object) {
+		parseCommand : function (actions, object) {
 
 			var self = this;
 
-			switch (command) {
+			switch (actions.verbs[0]) {
 				case 'read':
 					read();
 					break;
@@ -171,6 +169,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			};
 
 			function translate() {
+
+				var $contentObject = $('.article').find('#'+object.id);
+
+				self.checkState($contentObject);
+
+				Utilities.STT.native(object);
+
+				clearError();
 
 			};
 
