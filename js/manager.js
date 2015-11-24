@@ -23,9 +23,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 			var self = this;
 			$.getJSON('./json/articles.json', function (json) {
-				var content = json.data;
-				for (var i = 0; i < content.length; i++) {
-					self.content.push(new Article(content[i]));
+				for (var i = 0; i < json.data.length; i++) {
+					self.content.push(new Article(json.data[i]));
 				}
 			});
 
@@ -50,6 +49,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				}
 			}
 
+		},
+
+		getLanguage : function (requested_language) {
+			return Utilities.STT.getLanguageData()[requested_language];
 		},
 
 		/*
@@ -87,45 +90,80 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 		},
 
-		checkCommand : function (command) {
+		/*
+			Return language portions of the command
+		*/
+		getLanguageComponents : function (command) {
+			var languages = [];
+			var valid_languages = Utilities.STT.getLanguageData();
+			for (language in valid_languages) {
+				languages.push(language);
+			}
+			return command.intersect(languages);
+		},
 
-			var splitCommand = command.split(' ');
+		parseCommand : function (command) {
+
+			var splitCommand = command.split(' ').makeLower();
 
 			/*
-				Store lexical components of command
+				Parse command for meaningful attributes
 			*/
-			var actions = this.getLexicalComponents(splitCommand);
+			var components = {
+				actions : this.getLexicalComponents(splitCommand),
+				content : this.getContentComponents(splitCommand),
+				language : this.getLanguageComponents(splitCommand)
+			};
+
+			this.updateGUI(components);
+
+			this.doAction(components.actions, this.getRequestedData(components));
+		},
+
+		/*
+			Get matching data from request
+		*/
+		getRequestedData : function (args) {
+
+			var content = null,
+				language = null;
 
 			/*
-				Store content components of command
+				Set content object
 			*/
-			var content_components = this.getContentComponents(splitCommand);
-
-			var content = null;
-			if (content_components.tag.length > 0) {
-				content = this.getContentByTags(content_components.tag);
-			} else if (content_components.id.length > 0) {
-				content = this.getContentById(content_components.id);
+			if (args.content.tag.length > 0) {
+				content = this.getContentByTags(args.content.tag);
+			} else if (args.content.id.length > 0) {
+				content = this.getContentById(args.content.id);
 			} else {
-				console.log('Incorrect Command');
-				return;
+				return 'Requested content not found.';
 			}
 
-			this.updateGUI(command, actions, content);
+			/*
+				Set language object
+			*/
+			language = this.getLanguage(args.language[0]);
 
-			this.parseCommand(actions, content);
+			return {
+				content : content,
+				language : language
+			};
+
 		},
 
-		updateGUI : function (command, actions, content) {
-			$('#action').html(actions.verbs);
-			$('#content').html(content.title);
+		updateGUI : function (args) {
+			$('#action').html(args.actions.verbs);
+			$('#content').html(args.content);
+			$('#language').html(args.language[0]);
 		},
 
-		parseCommand : function (actions, object) {
+		doAction : function (action, args) {
 
 			var self = this;
 
-			switch (actions.verbs[0]) {
+			console.log('do action', action, args);
+
+			switch (action.verbs[0]) {
 				case 'read':
 					read();
 					break;
@@ -135,49 +173,28 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				case 'close':
 					close();
 					break;
-				case 'translate':
-					translate();
-					break;
 				default:
 					error('Command not understood. You can request to Read, Open, or Close');
 
 			};
 
 			function open() {
-				var $contentObject = $('.article').find('#'+object.id);
-
+				var $contentObject = $('.article').find('#'+args.content.id);
 				self.checkState($contentObject);
-				// $('.article').find('#'+object[0]).attr('class', 'active');
 				clearError();
 			};
 
 			function read() {
-
-				var $contentObject = $('.article').find('#'+object.id);
-
+				var $contentObject = $('.article').find('#'+args.content.id);
 				self.checkState($contentObject);
-
-				Utilities.STT.native(object);
-
+				Utilities.STT.native(args);
 				clearError();
 			};
 
 			function close() {
-				$('.article').find('#'+object.id).removeClass('active');
-
+				var $contentObject = $('.article').find('#'+args.content.id);
+				$contentObject.removeClass('active');
 				clearError();
-			};
-
-			function translate() {
-
-				var $contentObject = $('.article').find('#'+object.id);
-
-				self.checkState($contentObject);
-
-				Utilities.STT.native(object);
-
-				clearError();
-
 			};
 
 			function error(msg) {
@@ -203,6 +220,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
 	Array.prototype.intersect = function(arr) {
 		return this.filter(function(e) {
 			return arr.indexOf(e) > -1;
+		});
+	};
+
+	Array.prototype.makeLower = function() {
+		return this.map(function (str) {
+			return str.toLowerCase();
 		});
 	};
 

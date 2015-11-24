@@ -62,45 +62,46 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			};
 
 			api.getLanguageData = function () {
+				console.log('getLanguageData');
 
 				return {
 
 					'spanish' : {
-						code : 'es-ar'
+						code : 'es-ar',
+						text : 'es'
 					},
 					'chinese' : {
-						code : 'zh-cn'
+						code : 'zh-cn',
+						text : 'cn'
 					},
 					'english' : {
-						code : 'en-us'
+						code : 'en-us',
+						text : 'en'
+					},
+					'taiwanese' : {
+						code : 'zh-TW',
+						text : 'cn'
 					}
 				}
 			};
 
 			api.native = function (object, e) {
-			
-
-			/*
-				Cancel out current speech object or audio will not play
-			 */
+				/*
+					Cancel out current speech object or audio will not play
+				 */
 				speechSynthesis.cancel();
 
 				var utterance = new SpeechSynthesisUtterance();
 
-				// var voices = window.speechSynthesis.getVoices();
-				// utterance.voice = voices.filter(function(voice) { return voice.name == 'Google 中国的'; })[0];
+				//var voices = window.speechSynthesis.getVoices();
+				//utterance.voice = voices.filter(function(voice) { return voice.name == 'Google 中国的'; })[0];
 
 				utterance.rate = speech_rate;
 
-				//utterance.lang = "zh-cmn";
-				//utterance.lang = 'zh-TW';
-				// utterance.lang = 'zh-cn';
+				utterance.lang = object.language.code || 'en-us';
 
-				utterance.lang = 'en-us';
-
-				console.log('native: ', object);
-
-				utterance.text = object.text;
+				var text = object.language.text || 'en';
+				utterance.text = object.content.text[text];
 
 				utterance.onend = function (e) {
 					console.log('Finished in ' + e.elapsedTime + ' seconds.');
@@ -123,7 +124,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				// recognition.lang = "cmn-Hans-CN";
 
 				recognition.lang = 'en-us';
-
 
 				recognition.interimResults = true;
 
@@ -184,15 +184,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				return command; 
 			};
 
-
-
 			var update_response_box = function (text) {
 				$('#textBox').html('');
 				$('#textBox').html($('#textBox').html() + ' ' + text);
 
 				api.setCommand(text);
 
-				Utilities.Manager.checkCommand(api.getCommand());				
+				Utilities.Manager.parseCommand(api.getCommand());				
 			};
 
 

@@ -3,9 +3,7 @@ var Article = function(args) {
 	this.id = args.id || 1;
 	this.title = args.title || null;
 	this.date = args.date || 'Now';
-	this.text = args.text || 'Some Text';
-	this.text_es = args.text_es || null;
-	this.text_cn = args.text_cn || null;
+	this.text = args.text;
 	this.tags = args.tags || [];
 	this.image = args.image || 'http://placehold.it/500x500';
 	
@@ -29,8 +27,6 @@ Article.prototype = {
 		this.title = articleObj.title;
 		this.date = articleObj.date;
 		this.text = articleObj.text;
-		this.text_es = articleObj.text_es;
-		this.text_cn = articleObj.text_cn;
 		this.tags = articleObj.tags;
 		this.image = articleObj.image;
 	},
@@ -43,7 +39,7 @@ Article.prototype = {
 
 		this.elements.titleSpan.append(data.title);
 		this.elements.dateSpan.append(data.date);
-		this.elements.textSpan.append(data.text);
+		this.elements.textSpan.append(data.text.en);
 		this.elements.imageSpan.attr('src', data.image);
 
 		this.elements.articleSpan.append(this.elements.titleSpan);

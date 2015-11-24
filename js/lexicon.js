@@ -10,8 +10,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			this.verbs = [
 				'read',
 				'open',
-				'close',
-				'translate',
+				'close'
 			];
 
 			this.prepositions = [
