@@ -46,6 +46,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 		},
 
+		translateLexicon : function () {
+
+
+		},
+
 		getLanguage : function (requested_language) {
 			return Utilities.STT.getLanguageData()[requested_language];
 		},
@@ -145,17 +150,27 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 		},
 
-		updateGUI : function (action, args) {
-			$('#action').html(action.verbs);
-			$('#content').html(args.content.title);
-			$('#language').html(args.language.lang);
+		updateGUI : function (actions, args) {
+			var	action = content = language = 'Parsing command...';
+
+			if (actions) {
+				action = actions.verbs;
+			}	
+			if (args.content) {
+				content = args.content.title;
+			}
+			if (args.language) {
+				language = args.language.lang;
+			}
+
+			$('#action').html(action);
+			$('#content').html(content);
+			$('#language').html(language);
 		},
 
 		doAction : function (action, args) {
 
 			var self = this;
-
-			console.log('do action', action, args);
 
 			switch (action.verbs[0]) {
 				case 'read':

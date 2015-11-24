@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 			var api = {},
 				recognition = new webkitSpeechRecognition(),
-				words = [],
 				speaking = false,
 				speech_toggle = document.getElementById('toggle_speech'),
 				pronunciation_speed_slider = document.getElementById('pronunciation_speed_slider'),
@@ -29,15 +28,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				this.controls();
 			};
 
-			api.setWords = function (scrambled_wordBank_words) {
-				words = scrambled_wordBank_words;
-			};
-
 			api.speak = function (e) {
 				if (speaking) {
 					speaking = false;
 					this.stop_recognition(e);
-					speech_toggle.innerHTML = "Speak";
+					speech_toggle.innerHTML = "Speak in ";
 
 
 				} else {
@@ -110,28 +105,18 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 			};
 
-			var reset = function () {
-
-			};
-
 			api.start_recognition = function (e) {
 
-				var text = "";
-
 				recognition.continuous = true;
-				// recognition.lang = "cmn-Hans-CN";
-
-				recognition.lang = recognition_lang.code;
-
 				recognition.interimResults = true;
-
-				reset();
 
 				/*
 					Spanish and English tests
 				 */
 				//recognition.lang = "es-AR";
 				//recognition.lang = "en-US";
+				//recognition.lang = "cmn-Hans-CN";
+				recognition.lang = recognition_lang.code;
 
 				recognition.onstart = function (event) {
 					console.log(event);
@@ -153,8 +138,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				recognition.onresult = function (event) {
 					var interim = '';
 
-					var final = "";
-					var interim = "";
+					var final = '';
+					var interim = '';
 					for (var i = 0; i < event.results.length; ++i) {
 						if (event.results[i].final) {
 							final += event.results[i][0].transcript;
@@ -190,8 +175,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 				Utilities.Manager.parseCommand(api.getCommand());				
 			};
-
-
 
 			return api;
 
