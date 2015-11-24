@@ -6,6 +6,14 @@
 
 }
 
+#toggle_speech {
+	color: gray;
+}
+#toggle_speech:hover {
+	color: black;
+	cursor: pointer;
+}
+
 .active {
 	width: 500px !important;
 	position: relative;

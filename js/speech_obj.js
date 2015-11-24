@@ -12,9 +12,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				words = [],
 				speaking = false,
 				speech_toggle = document.getElementById('toggle_speech'),
-				native_speech = document.getElementById('native_speech'),
 				pronunciation_speed_slider = document.getElementById('pronunciation_speed_slider'),
 				speech_rate = 1,
+				recognition_lang = 'en-us';
 				command = '',
 				narrating = false;
 
@@ -23,11 +23,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					Bind click handlers
 				 */
 				speech_toggle.addEventListener("click", this.speak.bind(this), false);
-				native_speech.addEventListener("click", this.native.bind(this), false);
 
-
-				speech_toggle.innerHTML = "Speak";
-				native_speech.innerHTML = "Native";
+				speech_toggle.innerHTML = "Speak in ";
 
 				this.controls();
 			};
@@ -46,39 +43,34 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				} else {
 					speaking = true;
 					this.start_recognition(e);
-					speech_toggle.innerHTML = "Stop Speaking";
+					speech_toggle.innerHTML = "Stop Speaking in ";
 				}
 			};
 
 			api.controls = function (e) {
-
 				speech_rate = $('#select_language').val();
-
-			};
-
-
-			api.options = function (e) {
-
+				recognition_lang = this.getLanguageData()[$('#select_speech').val()];
 			};
 
 			api.getLanguageData = function () {
-				console.log('getLanguageData');
-
 				return {
-
 					'spanish' : {
+						lang : 'Spanish',
 						code : 'es-ar',
 						text : 'es'
 					},
 					'chinese' : {
+						lang : 'Chinese',
 						code : 'zh-cn',
 						text : 'cn'
 					},
 					'english' : {
+						lang : 'English',
 						code : 'en-us',
 						text : 'en'
 					},
 					'taiwanese' : {
+						lang : 'Taiwanese',
 						code : 'zh-TW',
 						text : 'cn'
 					}
@@ -93,14 +85,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 				var utterance = new SpeechSynthesisUtterance();
 
-				//var voices = window.speechSynthesis.getVoices();
-				//utterance.voice = voices.filter(function(voice) { return voice.name == 'Google 中国的'; })[0];
-
 				utterance.rate = speech_rate;
 
-				utterance.lang = object.language.code || 'en-us';
+				var text = null,
+					lang = null;
 
-				var text = object.language.text || 'en';
+				if (object.language) {
+					lang = object.language.code || 'en-us';
+					text = object.language.text || 'en';
+				} else {
+					lang = 'en-us';
+					text = 'en';
+				}
+
+				utterance.lang = lang;
 				utterance.text = object.content.text[text];
 
 				utterance.onend = function (e) {
@@ -123,7 +121,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				recognition.continuous = true;
 				// recognition.lang = "cmn-Hans-CN";
 
-				recognition.lang = 'en-us';
+				recognition.lang = recognition_lang.code;
 
 				recognition.interimResults = true;
 
@@ -145,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				};
 
 				recognition.onend = function (event) {
-					speech_toggle.innerHTML = "Speak";
+					speech_toggle.innerHTML = "Speak in ";
 				};
 
 				recognition.onerror = function (event) {

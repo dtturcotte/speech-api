@@ -20,18 +20,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		},
 
 		createContent : function () {
-
 			var self = this;
 			$.getJSON('./json/articles.json', function (json) {
 				for (var i = 0; i < json.data.length; i++) {
 					self.content.push(new Article(json.data[i]));
 				}
 			});
-
 		},
 
 		getContentById : function (id) {
-
 			for (var i = 0; i < this.content.length; i++) {
 				if (this.content[i].id === +id) {
 					return this.content[i];
@@ -39,16 +36,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 		},
 
-		getContentByTags : function (tags) {
-
+		getContentByTags : function (tag) {
 			for (var i = 0; i < this.content.length; i++) {
 				for (var j = 0; j < this.content[i].tags.length; j++) {
-					if (this.content[i].tags[j] === tags[0]) {
+					if (this.content[i].tags[j].toLowerCase() === tag) {
 						return this.content[i];
 					}
 				}
 			}
-
 		},
 
 		getLanguage : function (requested_language) {
@@ -59,20 +54,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			Return lexical portions of the command
 		*/
 		getLexicalComponents : function (command) {
-
 			return {
 				verbs 		 : command.intersect(Utilities.Lexicon.getLexicon().verbs),
 				prepositions : command.intersect(Utilities.Lexicon.getLexicon().prepositions),
 				adverbs	 	 : command.intersect(Utilities.Lexicon.getLexicon().adverbs)
 			}
-
 		},
 
 		/*
 			Return content portions of the command
 		*/
 		getContentComponents : function (command) {
-
 			var content_ids = this.content.map(function (obj) {
 				return obj.id.toString();
 			}); 
@@ -80,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			var content_tags = [];
 			for (var i = 0; i < this.content.length; i++) {
 				for (var j = 0; j < this.content[i].tags.length; j++) {
-					content_tags.push(this.content[i].tags[j]);
+					content_tags.push(this.content[i].tags[j].toLowerCase());
 				}
 			} 
 
@@ -115,9 +107,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				language : this.getLanguageComponents(splitCommand)
 			};
 
-			this.updateGUI(components);
+			var requested_data = this.getRequestedData(components);
 
-			this.doAction(components.actions, this.getRequestedData(components));
+			this.updateGUI(components.actions, requested_data);
+
+			this.doAction(components.actions, requested_data);
 		},
 
 		/*
@@ -132,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				Set content object
 			*/
 			if (args.content.tag.length > 0) {
-				content = this.getContentByTags(args.content.tag);
+				content = this.getContentByTags(args.content.tag[0]);
 			} else if (args.content.id.length > 0) {
 				content = this.getContentById(args.content.id);
 			} else {
@@ -151,10 +145,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 		},
 
-		updateGUI : function (args) {
-			$('#action').html(args.actions.verbs);
-			$('#content').html(args.content);
-			$('#language').html(args.language[0]);
+		updateGUI : function (action, args) {
+			$('#action').html(action.verbs);
+			$('#content').html(args.content.title);
+			$('#language').html(args.language.lang);
 		},
 
 		doAction : function (action, args) {
