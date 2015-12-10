@@ -48,8 +48,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		},
 
 		checkIsTranslated : function (lang) {
-			console.log('checkIsTranslated', lang);
-			console.log(this.translated_languages.indexOf(lang) > -1);
 			return this.translated_languages.indexOf(lang) > -1;
 		},
 
@@ -59,8 +57,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		localize : function (lang, callback) {
 
 			var self = this;
-			//console.log('localize', lang);
-			console.log('localize content', this.content);
 			var promises=[];
 
 			for (var i = 0; i < this.content.length; i++) {
@@ -89,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 
 			$.when.apply(null, promises).done(function(){
-				console.log('Done translating...', typeof callback);
+				console.log('Done translating...');
 				if (typeof callback === 'function') callback();
 			}.bind(this));
 		},
@@ -104,7 +100,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		},
 
 		setTranslatedText : function (id, text) {
-			console.log('set tra', id, text);
 			$('.article').find('#' + id).find('.text').html(text);
 		},
 
@@ -151,9 +146,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				languages.push(obj.lang.toLowerCase());
 			});
 
-			console.log('Cmmnad', command);
-
-			console.log('LANGUAGESSSSS', languages);
 			return command.intersect(languages);
 		},
 
@@ -170,21 +162,25 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				language : this.getLanguageComponents(splitCommand)
 			};
 
-			console.log('COMPONUNTS', components);
-
 			var requested_data = this.getRequestedData(components);
 
-			console.log('REQUESTED DATA', requested_data);
 			/*
 				If user requested narration language, translate first, then narrate
 				But first check if that language has already been translated
 			 */
 			var self = this;
 			if (requested_data.language) {
-				console.log('requested_data.language', requested_data.language);
 				if (!this.checkIsTranslated(requested_data.language.code)) {
 					this.localize(requested_data.language.code, function () {
-						self.doAction(components.actions, requested_data);
+						/*
+							 Awkward temp fix because callback is still returning before translated articles are available
+						 */
+						if (bandaid) clearTimeout(bandaid);
+						var bandaid = setTimeout(function () {
+							self.doAction(components.actions, requested_data);
+							clearTimeout(bandaid);
+						}, 500);
+
 					});
 				} else {
 					this.doAction(components.actions, requested_data);
@@ -215,17 +211,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				return 'Requested content not found.';
 			}
 
-			console.log('ARGS', args);
-
-			/*
-				Set language object { code, language }
-			*/
 			language = $.grep(Utilities.STT.getLanguageData(), function (obj) {
-				console.log('GREP', obj.lang, args.language[0]);
 				return obj.lang.toLowerCase() === args.language[0];
 			});
-
-			console.log('LANGUAGE', language);
 
 			return {
 				content : content,
@@ -255,8 +243,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 		doAction : function (action, args) {
 
-			console.log('DO ACTION', action, args);
-
 			var self = this;
 
 			switch (action.verbs[0]) {
@@ -281,11 +267,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			};
 
 			function read() {
-				console.log('READ', args);
 				var $contentObject = $('.article').find('#'+args.content.id);
 				self.checkState($contentObject);
-
-				//need to first translate the text if not translated
 				Utilities.STT.native(args);
 				clearError();
 			};

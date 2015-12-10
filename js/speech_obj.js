@@ -102,8 +102,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				/*
 					Cancel out current speech object or audio will not play
 				 */
-
-				console.log('NATIVE', object);
 				speechSynthesis.cancel();
 
 				var utterance = new SpeechSynthesisUtterance();
@@ -111,8 +109,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				utterance.rate = speech_rate;
 
 				var lang = (object.language) ? object.language.code : 'en-us';
-
-				console.log('LANG', lang);
 
 				switch (lang) {
 					case 'es':
@@ -128,14 +124,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
 						lang = 'zu';
 						break;
 					default:
-						lang = 'en-IN';
+						lang = 'en-GB';
 						break;
 				}
 
-				console.log('LANG2', lang);
-
 				utterance.lang = lang;
-				utterance.text = object.content.content[0].text;
+
+				var text_to_narrate = $.grep(object.content.content, function (obj) {
+					return obj.code.toLowerCase() === object.language.code;
+				});
+
+				utterance.text = text_to_narrate[0].text;
 
 				utterance.onend = function (e) {
 					console.log('Finished in ' + e.elapsedTime + ' seconds.');
@@ -149,6 +148,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			api.start_recognition = function (e) {
 
 				recognition.continuous = true;
+				/*
+					Uncomment for on-the-fly voice transcribing
+				 */
 				//recognition.interimResults = true;
 				recognition.lang = recognition_lang;
 
@@ -170,8 +172,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				};
 
 				recognition.onresult = function (event) {
-					var interim = '';
-
 					var final = '';
 					var interim = '';
 					for (var i = 0; i < event.results.length; ++i) {
