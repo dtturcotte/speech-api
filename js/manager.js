@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		init : function () {
 			this.content = [];
 			this.requested_content = null;
+			this.translated_languages = ['en-us'];
 			this.createContent();
 		},
 
@@ -46,17 +47,69 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			}
 		},
 
-		translateLexicon : function () {
-
-
-		},
-
-		getLanguage : function (requested_language) {
-			return Utilities.STT.getLanguageData()[requested_language];
+		checkIsTranslated : function (lang) {
+			console.log('checkIsTranslated', lang);
+			console.log(this.translated_languages.indexOf(lang) > -1);
+			return this.translated_languages.indexOf(lang) > -1;
 		},
 
 		/*
-			Return lexical portions of the command
+			Translate on the fly using Google Translate API (I'm a poet and I knew it)
+		 */
+		localize : function (lang, callback) {
+
+			var self = this;
+			//console.log('localize', lang);
+			console.log('localize content', this.content);
+			var promises=[];
+
+			for (var i = 0; i < this.content.length; i++) {
+
+				/*
+					 Translating from English -> Foreign Language for this version
+					 Eventually will have functionality to translate From Any Language -> Any Language
+				 */
+				var text = this.content[i].content[0].text;
+
+				var request =
+					(function (i) {
+						$.get('https://www.googleapis.com/language/translate/v2?key=AIzaSyCl7D63jOipGzu__0bwfyCNvQ8TTdUSI3o&source=en&target=' + lang + '&q=' + text,
+							function (json) {
+								self.content[i].content.push(
+									{
+										code: lang,
+										text: json.data.translations[0].translatedText
+									}
+								);
+								self.translated_languages.push(lang);
+							}
+						);
+					})(i);
+				promises.push(request);
+			}
+
+			$.when.apply(null, promises).done(function(){
+				console.log('Done translating...', typeof callback);
+				if (typeof callback === 'function') callback();
+			}.bind(this));
+		},
+
+		setAllText : function (lang) {
+			this.content.forEach(function (Article, index) {
+				var result = $.grep(Article.content, function(e){
+					return e.code === lang;
+				});
+				this.setTranslatedText(++index, result[0].text);
+			}.bind(this));
+		},
+
+		setTranslatedText : function (id, text) {
+			console.log('set tra', id, text);
+			$('.article').find('#' + id).find('.text').html(text);
+		},
+
+		/*
+			Return valid lexical portions of the command
 		*/
 		getLexicalComponents : function (command) {
 			return {
@@ -67,7 +120,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		},
 
 		/*
-			Return content portions of the command
+			Return valid content portions of the command
 		*/
 		getContentComponents : function (command) {
 			var content_ids = this.content.map(function (obj) {
@@ -88,14 +141,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		},
 
 		/*
-			Return language portions of the command
+			Return valid language portions of the command
 		*/
 		getLanguageComponents : function (command) {
-			var languages = [];
-			var valid_languages = Utilities.STT.getLanguageData();
-			for (language in valid_languages) {
-				languages.push(language);
-			}
+			var languages = [],
+			 	valid_languages = Utilities.STT.getLanguageData();
+
+			valid_languages.forEach(function (obj, index) {
+				languages.push(obj.lang.toLowerCase());
+			});
+
+			console.log('Cmmnad', command);
+
+			console.log('LANGUAGESSSSS', languages);
 			return command.intersect(languages);
 		},
 
@@ -112,11 +170,30 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				language : this.getLanguageComponents(splitCommand)
 			};
 
+			console.log('COMPONUNTS', components);
+
 			var requested_data = this.getRequestedData(components);
 
-			this.updateGUI(components.actions, requested_data);
+			console.log('REQUESTED DATA', requested_data);
+			/*
+				If user requested narration language, translate first, then narrate
+				But first check if that language has already been translated
+			 */
+			var self = this;
+			if (requested_data.language) {
+				console.log('requested_data.language', requested_data.language);
+				if (!this.checkIsTranslated(requested_data.language.code)) {
+					this.localize(requested_data.language.code, function () {
+						self.doAction(components.actions, requested_data);
+					});
+				} else {
+					this.doAction(components.actions, requested_data);
+				}
+			} else {
+				this.doAction(components.actions, requested_data);
+			}
 
-			this.doAction(components.actions, requested_data);
+			this.updateGUI(components.actions, requested_data);
 		},
 
 		/*
@@ -138,19 +215,27 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				return 'Requested content not found.';
 			}
 
+			console.log('ARGS', args);
+
 			/*
-				Set language object
+				Set language object { code, language }
 			*/
-			language = this.getLanguage(args.language[0]);
+			language = $.grep(Utilities.STT.getLanguageData(), function (obj) {
+				console.log('GREP', obj.lang, args.language[0]);
+				return obj.lang.toLowerCase() === args.language[0];
+			});
+
+			console.log('LANGUAGE', language);
 
 			return {
 				content : content,
-				language : language
+				language : language[0]
 			};
 
 		},
 
 		updateGUI : function (actions, args) {
+
 			var	action = content = language = 'Parsing command...';
 
 			if (actions) {
@@ -169,6 +254,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		},
 
 		doAction : function (action, args) {
+
+			console.log('DO ACTION', action, args);
 
 			var self = this;
 
@@ -194,8 +281,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			};
 
 			function read() {
+				console.log('READ', args);
 				var $contentObject = $('.article').find('#'+args.content.id);
 				self.checkState($contentObject);
+
+				//need to first translate the text if not translated
 				Utilities.STT.native(args);
 				clearError();
 			};

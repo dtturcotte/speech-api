@@ -15,7 +15,29 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				speech_rate = 1,
 				recognition_lang = 'en-us';
 				command = '',
-				narrating = false;
+				narrating = false,
+				valid_languages = [
+					{
+						code : 'en-us',
+						lang : 'English'
+					},
+					{
+						code : 'es',
+						lang : 'Spanish'
+					},
+					{
+						code : 'zh-cn',
+						lang : 'Chinese'
+					},
+					{
+						code : 'fr',
+						lang : 'French'
+					},
+					{
+						code : 'zu',
+						lang : 'Zulu'
+					}
+				];
 
 			api.init = function () {
 				/*
@@ -24,6 +46,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				speech_toggle.addEventListener("click", this.speak.bind(this), false);
 
 				speech_toggle.innerHTML = "Speak in ";
+
+				setValidLanguages();
 
 				this.controls();
 			};
@@ -42,59 +66,76 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				}
 			};
 
+			function setValidLanguages () {
+				valid_languages.forEach(function (obj, index) {
+					$('<option>').val(obj.code).text(obj.lang).appendTo('#select_speech');
+				});
+			}
+
 			api.controls = function (e) {
 				speech_rate = $('#select_language').val();
-				recognition_lang = this.getLanguageData()[$('#select_speech').val()];
+				recognition_lang = $('#select_speech').val();
+
+				console.log('recog', recognition_lang);
+
+				if (!Utilities.Manager.checkIsTranslated(recognition_lang))  {
+					Utilities.Manager.localize(recognition_lang, function () {
+						/*
+							Awkward temp fix because callback is still returning before translated articles are available
+						 */
+						if (bandaid) clearTimeout(bandaid);
+						var bandaid = setTimeout(function () {
+							Utilities.Manager.setAllText(recognition_lang);
+							clearTimeout(bandaid);
+						}, 500);
+					});
+				} else {
+					Utilities.Manager.setAllText(recognition_lang);
+				}
 			};
 
 			api.getLanguageData = function () {
-				return {
-					'spanish' : {
-						lang : 'Spanish',
-						code : 'es-ar',
-						text : 'es'
-					},
-					'chinese' : {
-						lang : 'Chinese',
-						code : 'zh-cn',
-						text : 'cn'
-					},
-					'english' : {
-						lang : 'English',
-						code : 'en-us',
-						text : 'en'
-					},
-					'taiwanese' : {
-						lang : 'Taiwanese',
-						code : 'zh-TW',
-						text : 'cn'
-					}
-				}
-			};
+				return valid_languages;
+			},
 
 			api.native = function (object, e) {
 				/*
 					Cancel out current speech object or audio will not play
 				 */
+
+				console.log('NATIVE', object);
 				speechSynthesis.cancel();
 
 				var utterance = new SpeechSynthesisUtterance();
 
 				utterance.rate = speech_rate;
 
-				var text = null,
-					lang = null;
+				var lang = (object.language) ? object.language.code : 'en-us';
 
-				if (object.language) {
-					lang = object.language.code || 'en-us';
-					text = object.language.text || 'en';
-				} else {
-					lang = 'en-us';
-					text = 'en';
+				console.log('LANG', lang);
+
+				switch (lang) {
+					case 'es':
+						lang = 'es-CO';
+						break;
+					case 'zh-cn':
+						lang = 'zh-CN';
+						break;
+					case 'fr':
+						lang = 'fr-FR';
+						break;
+					case 'zu':
+						lang = 'zu';
+						break;
+					default:
+						lang = 'en-IN';
+						break;
 				}
 
+				console.log('LANG2', lang);
+
 				utterance.lang = lang;
-				utterance.text = object.content.text[text];
+				utterance.text = object.content.content[0].text;
 
 				utterance.onend = function (e) {
 					console.log('Finished in ' + e.elapsedTime + ' seconds.');
@@ -108,15 +149,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 			api.start_recognition = function (e) {
 
 				recognition.continuous = true;
-				recognition.interimResults = true;
-
-				/*
-					Spanish and English tests
-				 */
-				//recognition.lang = "es-AR";
-				//recognition.lang = "en-US";
-				//recognition.lang = "cmn-Hans-CN";
-				recognition.lang = recognition_lang.code;
+				//recognition.interimResults = true;
+				recognition.lang = recognition_lang;
 
 				recognition.onstart = function (event) {
 					console.log(event);
